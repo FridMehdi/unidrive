@@ -1,0 +1,996 @@
+# Cursor Rules - Boilerplate React Native Boilerplate
+
+You are an expert React Native developer working on Boilerplate, a production-ready boilerplate built with Expo, NativeWind, and TypeScript.
+
+## Project Context
+
+- **Framework**: React Native + Expo SDK 54
+- **Styling**: NativeWind v4 (TailwindCSS for React Native)
+- **Navigation**: Expo Router (file-based routing)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Payments**: RevenueCat
+- **Icons**: Lucide React Native
+- **State**: React Context API
+
+## Critical Rules
+
+### 1. Never Use Custom Colors Unless Explicitly Asked
+
+**NEVER** use custom/dynamic colors unless the user specifically requests it. Default to theme colors only (`background`, `secondary`, `highlight`).
+
+```typescript
+// ✅ CORRECT - Use theme colors by default
+<View className="w-11 h-11 rounded-2xl bg-background items-center justify-center">
+  <Icon name={cat.icon} size={20} />
+</View>
+
+// ❌ WRONG - Do NOT add dynamic/custom colors unless asked
+<View style={{ backgroundColor: cat.color + '20' }}>
+  <Icon name={cat.icon} size={20} color={cat.color} />
+</View>
+```
+
+**Rules:**
+- Default icon containers: `bg-background` — no custom color
+- Default icons: no `color` prop — use automatic theme color
+- `highlight` color: only for primary CTAs and accent elements
+- Custom/hex colors: **only when user explicitly requests colorful UI**
+- NEVER hardcode hex colors like `#ffffff` or `rgb()`
+
+Available Tailwind colors: `background`, `secondary`, `text`, `border`, `highlight`, `primary`, `invert`, `darker`
+
+### Changing Theme Colors
+
+When modifying colors, update **TWO files**:
+
+1. **`/utils/color-theme.ts`** - NativeWind CSS variables (for Tailwind classes)
+2. **`/contexts/ThemeColors.tsx`** - JS values (for `useThemeColors()`)
+
+Both must stay in sync. Example for changing highlight color:
+
+```typescript
+// utils/color-theme.ts
+"--color-highlight": "#6366f1",  // New color
+
+// app/contexts/ThemeColors.tsx
+highlight: '#6366f1',  // Same color
+```
+
+### 2. Always Use ThemedText (with exceptions)
+
+Use `ThemedText` for 95% of text content:
+
+```typescript
+// ✅ CORRECT - Normal text content
+import ThemedText from '@/components/ThemedText';
+<ThemedText className="text-lg font-bold">Title</ThemedText>
+
+// ❌ WRONG - Raw Text without theme awareness
+import { Text } from 'react-native';
+<Text>Content</Text>
+```
+
+**Exception:** When text is on a fixed background (image overlays, colored backgrounds that don't change between light/dark mode), use explicit colors:
+
+```typescript
+// ✅ Text on image overlay or fixed dark background
+<Text className="text-white font-bold">Overlay Title</Text>
+
+// ✅ Text on fixed colored background (like highlight)
+<Text className="text-white">Button Text</Text>
+
+// ✅ Text on fixed light background
+<Text className="text-black">Dark Text</Text>
+```
+
+### 3. Use Existing Components
+
+Check `/components` before creating new ones. This boilerplate has 40+ components.
+
+### 4. Always Use CardScroller for Horizontal Scrolling
+
+**NEVER** create custom horizontal ScrollViews. Always use `CardScroller`:
+
+```typescript
+// ✅ CORRECT
+import { CardScroller } from '@/components/CardScroller';
+<CardScroller space={12}>
+  {items.map(item => <Card key={item.id} {...item} />)}
+</CardScroller>
+
+// ❌ WRONG - Never do this
+<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+  {items.map(item => <Card key={item.id} {...item} />)}
+</ScrollView>
+```
+
+### 5. Always Add Header to Screens
+
+**ALWAYS** add a `Header` component to new screens with a right icon:
+
+```typescript
+// Tab screen - with contextual right icon
+<Header
+  title="Store"
+  rightComponents={[<Icon key="cart" name="ShoppingCart" />]}
+/>
+
+// Nested screen - back button + right icon
+<Header
+  showBackButton
+  title="Product Details"
+  rightComponents={[<Icon key="share" name="Share" />]}
+/>
+```
+
+**Back button rules:**
+- **Tab screens** (`/(drawer)/(tabs)/`): No back button - top-level navigation
+- **Nested screens** (`/screens/`): Always use `showBackButton`
+- **Modal screens**: Use `showBackButton` or custom close button
+
+**Right icon rules - ALWAYS add a contextual icon:**
+- Store/Shop: `Cart`, `ShoppingBag`, `Search`
+- Profile: `Settings`, `Edit`
+- Home: `Bell`, `Search`
+- Detail: `Share`, `Heart`, `MoreVertical`
+- Settings: `HelpCircle`, `Info`
+- List: `Filter`, `Search`, `Plus`
+
+### 6. Always Use ActionSheetThemed
+
+**NEVER** use raw `ActionSheet`. Always use `ActionSheetThemed`:
+
+```typescript
+// ✅ CORRECT
+import ActionSheetThemed from '@/components/ActionSheetThemed';
+import { ActionSheetRef } from 'react-native-actions-sheet';
+
+const sheetRef = useRef<ActionSheetRef>(null);
+
+<ActionSheetThemed ref={sheetRef} gestureEnabled>
+  <View className="px-6 pt-4 pb-4">
+    {/* Content */}
+  </View>
+</ActionSheetThemed>
+
+// ❌ WRONG - Raw ActionSheet
+import ActionSheet from 'react-native-actions-sheet';
+<ActionSheet containerStyle={{ backgroundColor: colors.background }}>
+```
+
+`ActionSheetThemed` automatically handles: theme colors, safe area padding, border radius, gestures.
+
+### 7. LinearGradient Requires Inline Styles
+
+`expo-linear-gradient` does **NOT** support Tailwind/NativeWind classes. You must use inline styles:
+
+```typescript
+import { LinearGradient } from 'expo-linear-gradient';
+
+// ✅ CORRECT - Use inline styles
+<LinearGradient
+  colors={['transparent', 'rgba(0,0,0,0.7)']}
+  style={{
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  }}
+>
+  <Text className="text-white">Title</Text>
+</LinearGradient>
+
+// ❌ WRONG - Tailwind classes don't work on LinearGradient
+<LinearGradient
+  colors={['transparent', 'rgba(0,0,0,0.7)']}
+  className="absolute bottom-0 left-0 right-0 p-6 rounded-b-3xl"
+>
+```
+
+**Note:** Children inside LinearGradient can still use Tailwind classes normally.
+
+### 8. Always Use Existing Components First
+
+**Before creating ANY custom UI, always check `/components` for existing components.** This boilerplate has 40+ components.
+
+```typescript
+// ✅ CORRECT - Use existing components
+<Card variant="overlay" title="Workout" image="..." />
+<Button title="Start" iconEnd="ArrowRight" />
+<Chip label="Featured" icon="Star" />
+<ListLink icon="Settings" title="Settings" href="/settings" />
+<ImageCarousel images={images} />
+
+// ❌ WRONG - Creating custom when existing ones work
+```
+
+**Decision flow:**
+1. **Check existing components** - Review Component Reference section
+2. **Try variants/props** - Card: classic/overlay/compact, Button: primary/secondary/outline, etc.
+3. **Only create custom if truly needed** - Unique layout, special interactions
+
+**Component mappings:**
+| UI Need | Component |
+|---------|-----------|
+| Cards with images | `Card` |
+| Buttons | `Button` |
+| Horizontal scroll | `CardScroller` |
+| List items | `ListLink` |
+| Collapsible | `Expandable` |
+| Image sliders | `ImageCarousel` |
+| Tags/filters | `Chip` |
+| User photos | `Avatar` |
+| Forms | `Input`, `Select`, `Switch` |
+| Progress | `ProgressBar` |
+| Sections | `Section` |
+| Bottom sheets | `ActionSheetThemed` |
+
+### 9. Keep Bottom Tabs Uniform
+
+**NEVER** use custom components, styling, or special layouts for tab bar items. All tabs must use standard `TabButton` with `icon` only.
+
+```typescript
+// ✅ CORRECT
+<TabTrigger name="home" href="/home" asChild>
+  <TabButton isLabelVisible={true} icon="Home">Home</TabButton>
+</TabTrigger>
+
+// ❌ WRONG - Custom center button or special styling
+<TabTrigger name="add" href="/add" asChild>
+  <TabButton customContent={<View className="w-12 h-12 rounded-full bg-highlight">...</View>}>
+    Add
+  </TabButton>
+</TabTrigger>
+```
+
+### 10. Chip Defaults — No Icons, No Custom Size
+
+Always use default `size="md"`. Never add `icon` unless explicitly asked.
+
+```typescript
+// ✅ CORRECT
+<Chip label="Category" />
+<Chip label="Selected" isSelected={true} onPress={toggle} />
+
+// ❌ WRONG
+<Chip label="Category" size="lg" icon="Tag" />
+```
+
+### 11. Create Inline Components for Repetitive UI
+
+When building screens from screenshots, if you see repetitive UI elements (cards, list items, badges, etc.), create an inline component at the top of the same file:
+
+```typescript
+// ✅ CORRECT - Create inline component for repetitive elements
+const DestinationCard = ({ title, image, rating }: {
+    title: string;
+    image: string;
+    rating: number;
+}) => (
+    <View style={{ width: 180 }}>
+        <ImageBackground source={{ uri: image }} style={{ height: 140 }}>
+            {/* Rating badge, title, etc. */}
+        </ImageBackground>
+        <ThemedText className="text-base font-semibold mt-2">{title}</ThemedText>
+    </View>
+);
+
+export default function MyScreen() {
+    return (
+        <CardScroller>
+            {items.map((item) => <DestinationCard key={item.id} {...item} />)}
+        </CardScroller>
+    );
+}
+
+// ❌ WRONG - Duplicating JSX for each item
+```
+
+**Benefits:** Cleaner code, easy to modify all instances, user can later extract to `/components` if needed.
+
+### 12. Creating New Components
+
+When existing components don't fit your needs, follow this template:
+
+```typescript
+import { View, ViewStyle } from 'react-native';
+import useThemeColors from '@/contexts/ThemeColors';
+import ThemedText from '@/components/ThemedText';
+import Icon, { IconName } from '@/components/Icon';
+
+interface MyComponentProps {
+  title: string;
+  description?: string;
+  variant?: 'primary' | 'secondary';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  className?: string;
+  style?: ViewStyle;
+  onPress?: () => void;
+  icon?: IconName;
+}
+
+export default function MyComponent({
+  title,
+  description,
+  variant = 'primary',
+  size = 'medium',
+  disabled = false,
+  className = '',
+  style,
+  onPress,
+  icon,
+}: MyComponentProps) {
+  const colors = useThemeColors();
+
+  return (
+    <View className={`p-4 rounded-xl bg-secondary ${className}`} style={style}>
+      {icon && <Icon name={icon} color={colors.icon} />}
+      <ThemedText className="text-lg font-semibold">{title}</ThemedText>
+    </View>
+  );
+}
+```
+
+**Requirements:**
+- TypeScript interfaces for props
+- `useThemeColors()` for dynamic colors
+- `ThemedText` for text (unless on fixed backgrounds)
+- Tailwind classes via `className`
+- Support `className` and `style` props
+- Use existing components internally (Icon, ThemedText, etc.)
+
+---
+
+## Component Reference
+
+### CardScroller - ALWAYS Use for Horizontal Scrolling
+
+```typescript
+import { CardScroller } from '@/components/CardScroller';
+
+// Basic usage (most common)
+<CardScroller space={12}>
+  {items.map(item => <Card key={item.id} {...item} />)}
+</CardScroller>
+
+// With title
+<CardScroller title="Featured" space={10}>
+  <Card title="Item 1" image="..." />
+</CardScroller>
+
+// ⚠️ Only add allUrl when user explicitly requests "See all" link
+<CardScroller title="Featured" allUrl="/screens/all">
+  {/* ... */}
+</CardScroller>
+```
+
+**Important:** Do NOT add `allUrl` by default. Only include it when the user explicitly asks for a "See all" link.
+
+### Button
+
+```typescript
+import { Button } from '@/components/Button';
+
+// Variants: primary, secondary, outline, ghost
+// Sizes: small, medium, large
+// Rounded: none, xs, sm, md, lg, xl, full
+<Button title="Primary" />
+<Button title="Secondary" variant="secondary" />
+<Button title="Outline" variant="outline" />
+<Button title="Ghost" variant="ghost" />
+
+// With icons
+<Button title="Settings" iconStart="Settings" />
+<Button title="Next" iconEnd="ChevronRight" />
+
+// Navigation
+<Button title="Go" href="/screens/settings" />
+
+// States
+<Button title="Loading" loading={true} />
+<Button title="Disabled" disabled={true} />
+```
+
+### Card
+
+```typescript
+import Card from '@/components/Card';
+
+// Variants: classic, overlay, compact, minimal
+<Card
+  title="Card Title"
+  description="Description text"
+  image="https://..."
+  variant="classic"         // default
+  hasShadow
+  hasFavorite
+  price="$99.99"
+  rating={4.5}
+  badge="New"
+  badgeColor="#FF5733"
+  imageHeight={200}
+  width={200}
+  rounded="2xl"             // none, sm, md, lg, xl, 2xl, full
+  padding="md"              // sm, md, lg, xl
+  titleSize="md"            // sm, md, lg, xl, 2xl, 3xl
+  href="/screens/detail"    // or onPress
+/>
+
+// ⚠️ Padding & Title Size Guidelines:
+// Full-width/large cards: padding="lg" titleSize="lg"
+// CardScroller/grids: padding="md" titleSize="md" (defaults)
+```
+
+### Input
+
+```typescript
+import Input from '@/components/forms/Input';
+
+// Variants: classic, underlined, label-inside, inline
+<Input
+  label="Email"
+  placeholder="Enter email"
+  value={value}
+  onChangeText={setValue}
+  variant="classic"
+/>
+<Input label="Password" isPassword />
+<Input label="Search" rightIcon="Search" />
+<Input label="Bio" isMultiline numberOfLines={4} />
+<Input label="Field" error="Error message" />
+```
+
+### Avatar
+
+```typescript
+import Avatar from '@/components/Avatar';
+
+// Sizes: xxs, xs, sm, md, lg, xl, xxl
+<Avatar src="https://..." size="lg" />
+<Avatar name="John Doe" size="md" />  // Shows initials "JD"
+<Avatar src={url} size="lg" border />
+<Avatar name="Jane" bgColor="#6366f1" />
+```
+
+### Chip
+
+**Always use default `size="md"`. Never add `icon` unless explicitly asked.**
+
+```typescript
+import { Chip } from '@/components/Chip';
+
+// ✅ CORRECT - defaults only
+<Chip label="Category" />
+<Chip label="Selected" isSelected onPress={toggle} />
+<Chip label="With Image" image="https://..." />
+
+// ❌ WRONG - no custom size or icon without being asked
+<Chip label="With Icon" icon="Star" size="lg" />
+```
+
+### Icon
+
+Icon has **built-in theme-aware colors** - no need to specify color in most cases.
+
+```typescript
+import Icon from '@/components/Icon';
+
+// Basic - color is automatic (white in dark, black in light)
+<Icon name="Settings" size={24} />
+
+// Variants: plain, bordered, contained
+// iconSize (for containers): xs, s, m, l, xl, xxl
+<Icon name="User" variant="bordered" />
+<Icon name="Plus" variant="contained" iconSize="m" />
+
+// Custom color - only when needed (fixed backgrounds, accent colors)
+<Icon name="Heart" color="#ff0000" fill="#ff0000" />
+<Icon name="Check" color="white" />  // On dark fixed background
+
+// Pressable
+<Icon name="Plus" onPress={() => handleAdd()} />
+```
+
+### Section
+
+**When stacking multiple Sections, use `mt-10` minimum for proper spacing.**
+
+```typescript
+import Section from '@/components/layout/Section';
+
+<Section title="Featured">
+  <Card title="Item" image="..." />
+</Section>
+
+<Section title="Products" subtitle="Our latest collection">
+  {/* content */}
+</Section>
+
+// ⚠️ Multiple sections - use mt-10 minimum between them
+<Section title="First Section" className="mt-4">
+  {/* content */}
+</Section>
+<Section title="Second Section" className="mt-10">
+  {/* content */}
+</Section>
+<Section title="Third Section" className="mt-10">
+  {/* content */}
+</Section>
+```
+
+### Header
+
+```typescript
+import Header from '@/components/Header';
+
+// ⚠️ ALWAYS use default variant unless explicitly asked otherwise
+<Header showBackButton title="Screen Title" />
+
+// Only use these when explicitly requested:
+<Header variant="transparent" showBackButton />  // For hero images
+<Header variant="blurred" title="Title" />       // For overlay effects
+
+<Header
+  showBackButton
+  title="Profile"
+  rightComponents={[
+    <Icon key="settings" name="Settings" onPress={openSettings} />
+  ]}
+/>
+
+<Header
+  leftComponent={<Icon name="Menu" onPress={openDrawer} />}
+  middleComponent={<SearchInput />}
+  title="Home"
+/>
+```
+
+### ListLink
+
+```typescript
+import ListLink from '@/components/ListLink';
+
+<ListLink title="Profile" href="/screens/profile" />
+<ListLink
+  icon="User"
+  title="Account"
+  description="Manage your account settings"
+  href="/screens/account"
+  showChevron
+  hasBorder
+/>
+<ListLink icon="LogOut" title="Sign Out" onPress={handleSignOut} />
+<ListLink title="Coming Soon" disabled />
+```
+
+### Expandable
+
+```typescript
+import Expandable from '@/components/Expandable';
+
+<Expandable title="FAQ Question">
+  <ThemedText>This is the answer that shows when expanded.</ThemedText>
+</Expandable>
+
+<Expandable
+  icon="HelpCircle"
+  title="How does this work?"
+  description="Click to learn more"
+  defaultExpanded
+  hasBorder={false}
+>
+  <View className="gap-2">
+    <ThemedText>Step 1: Do this</ThemedText>
+    <ThemedText>Step 2: Do that</ThemedText>
+  </View>
+</Expandable>
+```
+
+### Select
+
+```typescript
+import Select from '@/components/forms/Select';
+
+const options = [
+  { label: 'Option 1', value: '1' },
+  { label: 'Option 2', value: '2' },
+];
+
+// Variants: classic, underlined, label-inside, inline
+<Select
+  label="Choose Option"
+  placeholder="Select a category"
+  options={options}
+  value={selected}
+  onChange={setSelected}
+  variant="classic"
+  error="Please select an option"
+/>
+```
+
+### Switch
+
+```typescript
+import Switch from '@/components/forms/Switch';
+
+<Switch value={isEnabled} onChange={setIsEnabled} />
+<Switch
+  icon="Bell"
+  label="Notifications"
+  description="Receive push notifications"
+  value={notifications}
+  onChange={setNotifications}
+/>
+```
+
+### Selectable
+
+```typescript
+import Selectable from '@/components/forms/Selectable';
+
+<Selectable
+  icon="Palette"
+  title="Design"
+  description="Design related interests"
+  selected={interests.includes('design')}
+  onPress={() => toggleInterest('design')}
+  error="Please select an option"
+/>
+
+<Selectable
+  customIcon={<MyCustomIcon />}
+  title="Custom"
+  selected={isSelected}
+  onPress={toggle}
+/>
+```
+
+### ImageCarousel
+
+```typescript
+import ImageCarousel from '@/components/ImageCarousel';
+
+const images = ['url1', 'url2', 'url3'];
+
+<ImageCarousel images={images} />
+<ImageCarousel images={images} height={300} />
+<ImageCarousel images={images} paginationStyle="numbers" />  // or "dots"
+<ImageCarousel images={images} autoPlay autoPlayInterval={3000} loop />
+<ImageCarousel images={images} rounded="xl" />
+<ImageCarousel images={images} onImagePress={(index) => openFullscreen(index)} />
+```
+
+### ProgressBar
+
+```typescript
+import ProgressBar from '@/components/ProgressBar';
+
+<ProgressBar percentage={75} />
+<ProgressBar percentage={50} fillColor="bg-green-500" backgroundColor="bg-gray-200" />
+<ProgressBar percentage={80} height={12} />
+<ProgressBar percentage={60} rounded={false} />
+<ProgressBar percentage={90} duration={1500} delay={500} />
+```
+
+### MultiStep
+
+```typescript
+import MultiStep, { Step } from '@/components/MultiStep';
+
+<MultiStep
+  onComplete={() => router.back()}
+  onClose={() => router.back()}
+  showHeader={true}
+  showStepIndicator={true}
+  onStepChange={(nextStep) => {
+    // Return false to prevent navigation
+    if (nextStep === 2 && !isValid) return false;
+    return true;
+  }}
+>
+  <Step title="Welcome">
+    <View className="flex-1 px-global justify-center">
+      <ThemedText className="text-3xl font-bold">Welcome!</ThemedText>
+    </View>
+  </Step>
+
+  <Step title="Your Name">
+    <View className="flex-1 px-global pt-8">
+      <Input placeholder="Enter your name" />
+    </View>
+  </Step>
+
+  <Step title="Interests" optional>
+    {/* Optional step - can be skipped */}
+  </Step>
+
+  <Step title="Complete">
+    <Icon name="Check" size={48} />
+  </Step>
+</MultiStep>
+```
+
+### Review
+
+```typescript
+import Review from '@/components/Review';
+
+<Review
+  rating={4}
+  description="Great product! Really happy with my purchase."
+  date="Jan 15, 2025"
+  username="John D."
+  avatar="https://example.com/avatar.jpg"
+/>
+```
+
+### ActionSheetThemed
+
+```typescript
+import ActionSheetThemed, { ActionSheetItem } from '@/components/ActionSheetThemed';
+import { useRef } from 'react';
+import { ActionSheetRef } from 'react-native-actions-sheet';
+
+const actionSheetRef = useRef<ActionSheetRef>(null);
+
+<Button title="Open Menu" onPress={() => actionSheetRef.current?.show()} />
+
+<ActionSheetThemed ref={actionSheetRef}>
+  <View className="p-4">
+    <ActionSheetItem icon="Edit" title="Edit" onPress={() => { actionSheetRef.current?.hide(); handleEdit(); }} />
+    <ActionSheetItem icon="Share" title="Share" onPress={() => { actionSheetRef.current?.hide(); handleShare(); }} />
+    <ActionSheetItem icon="Trash" title="Delete" onPress={() => { actionSheetRef.current?.hide(); handleDelete(); }} />
+  </View>
+</ActionSheetThemed>
+```
+
+### ThemedText
+
+```typescript
+import ThemedText from '@/components/ThemedText';
+
+<ThemedText>Regular text</ThemedText>
+<ThemedText className="text-lg font-bold">Bold title</ThemedText>
+<ThemedText className="text-sm opacity-60">Muted text</ThemedText>
+<ThemedText numberOfLines={2}>Truncated text...</ThemedText>
+```
+
+### ThemedScroller
+
+**Already includes `px-global` padding** - do NOT add it to children.
+
+```typescript
+import ThemedScroller from '@/components/ThemeScroller';
+
+// ✅ CORRECT - ThemedScroller handles horizontal padding
+<ThemedScroller className="flex-1 bg-background">
+  <Section title="Content">{/* no px-global needed */}</Section>
+</ThemedScroller>
+
+// ❌ WRONG - Don't add px-global to ThemedScroller or its children
+<ThemedScroller className="flex-1 bg-background px-global">
+```
+
+### AnimatedView
+
+```typescript
+import AnimatedView from '@/components/AnimatedView';
+
+<AnimatedView type="fadeIn" delay={100}>
+  <Card title="Animated card" image="..." />
+</AnimatedView>
+```
+
+---
+
+## Spacing Standards
+
+```typescript
+// Screen horizontal padding - ALWAYS use for screen content
+<View className="px-global">  // 24px
+
+// Standard spacing
+gap-2    // 8px
+gap-3    // 12px
+gap-4    // 16px
+p-4      // 16px padding
+py-3     // 12px vertical
+mb-4     // 16px margin bottom
+```
+
+## Shadow Presets
+
+Shadows are appropriate on cards, blocks, and elevated UI elements. Always use `shadowPresets.large` — never custom shadow styles.
+
+```typescript
+import { shadowPresets } from '@/utils/useShadow';
+
+// ✅ CORRECT - Use on cards and elevated blocks
+<View style={shadowPresets.large} className="bg-secondary rounded-2xl">
+
+// ❌ WRONG - Custom shadow styles
+<View style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 } }}>
+```
+
+## Navigation Patterns
+
+```typescript
+// Link-based (preferred)
+import { Link } from 'expo-router';
+<Link href="/screens/settings" asChild>
+  <Pressable>...</Pressable>
+</Link>
+
+// Programmatic
+import { router } from 'expo-router';
+router.push('/screens/detail');
+router.push({ pathname: '/screens/detail', params: { id } });
+router.replace('/screens/home');
+router.back();
+
+// Component href prop
+<Button title="Go" href="/screens/page" />
+<Card title="Item" href="/screens/detail" />
+<ListLink title="Profile" href="/screens/profile" />
+```
+
+## Context Usage
+
+```typescript
+// Auth
+const { user, profile, signIn, signOut } = useAuth();
+
+// Theme
+const { theme, toggleTheme } = useTheme();
+const colors = useThemeColors();
+
+// Translations
+const { t } = useTranslation();
+
+// Payments
+const { isProUser, offerings, purchasePackage } = useRevenueCat();
+```
+
+## File Structure
+
+```
+/app
+  /(drawer)/(tabs)/     # Main navigation
+  /contexts/            # State management
+  /hooks/               # Custom hooks
+  /screens/             # Feature screens
+  /locales/             # i18n files
+
+/components
+  /forms/               # Form components
+  /layout/              # Layout helpers
+  # Core UI components
+
+/lib                    # Supabase client
+/utils                  # Utilities
+```
+
+## Naming Conventions
+
+- **Components**: PascalCase (`Button.tsx`, `CardScroller.tsx`)
+- **Screens**: kebab-case (`note-detail.tsx`, `user-profile.tsx`)
+- **Hooks**: camelCase with `use` prefix (`useThemeColors.ts`)
+- **Utils**: camelCase (`useShadow.ts`, `color-theme.ts`)
+
+## Screen Template
+
+```typescript
+import Header from '@/components/Header';
+import ThemedScroller from '@/components/ThemeScroller';
+import Section from '@/components/layout/Section';
+import ThemedText from '@/components/ThemedText';
+
+// Tab screen (top-level) - no back button
+export default function TabScreen() {
+  return (
+    <>
+      <Header title="Home" />
+      <ThemedScroller className="flex-1 bg-background">
+        <Section title="Section" className="mt-4 mb-4">
+          <ThemedText>Content here</ThemedText>
+        </Section>
+      </ThemedScroller>
+    </>
+  );
+}
+
+// Nested screen - with back button
+export default function NestedScreen() {
+  return (
+    <>
+      <Header showBackButton title="Screen Title" />
+      <ThemedScroller className="flex-1 bg-background">
+        <Section title="Section" className="mt-4 mb-4">
+          <ThemedText>Content here</ThemedText>
+        </Section>
+      </ThemedScroller>
+    </>
+  );
+}
+```
+
+## Common Patterns
+
+### Horizontal Scrolling Section
+
+```typescript
+<Section title="Featured" className="mt-4">
+  <CardScroller space={12}>
+    {items.map((item) => (
+      <Card key={item.id} title={item.title} image={item.image} width={200} />
+    ))}
+  </CardScroller>
+</Section>
+```
+
+### Settings List
+
+```typescript
+<View>
+  <ListLink icon="User" title="Profile" href="/screens/profile" showChevron hasBorder />
+  <ListLink icon="Bell" title="Notifications" href="/screens/notifications" showChevron hasBorder />
+  <ListLink icon="LogOut" title="Sign Out" onPress={signOut} />
+</View>
+```
+
+### FAQ/Accordion
+
+```typescript
+{faqs.map((faq, index) => (
+  <Expandable key={index} title={faq.question} hasBorder={index < faqs.length - 1}>
+    <ThemedText>{faq.answer}</ThemedText>
+  </Expandable>
+))}
+```
+
+### Form Screen with Bottom Button
+
+```typescript
+export default function FormScreen() {
+  return (
+    <>
+      <Header showBackButton title="Form" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <ThemedScroller className="flex-1 bg-background">
+          <Input label="Field" value={value} onChangeText={setValue} />
+        </ThemedScroller>
+        <View className="px-global py-4">
+          <Button title="Submit" onPress={handleSubmit} />
+        </View>
+      </KeyboardAvoidingView>
+    </>
+  );
+}
+```
+
+## Common Mistakes to Avoid
+
+1. ❌ Using `<Text>` instead of `<ThemedText>`
+2. ❌ Hardcoding colors (`#fff`, `rgb()`, `black`)
+3. ❌ Using inline styles for layout (use Tailwind)
+4. ❌ Creating duplicate components that already exist
+5. ❌ Creating new horizontal scrollers - use `CardScroller`
+6. ❌ Ignoring TypeScript types
+7. ❌ Not using `useNativeDriver: true` in animations
+8. ❌ Using deprecated React Native APIs
+9. ❌ Not testing dark mode
+
+## Before Submitting Code
+
+- [ ] No TypeScript errors
+- [ ] Uses ThemedText for all text
+- [ ] No hardcoded colors
+- [ ] Uses existing components
+- [ ] Uses CardScroller for horizontal scrolling
+- [ ] Works in light mode
+- [ ] Works in dark mode
+- [ ] Follows naming conventions

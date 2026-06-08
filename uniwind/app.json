@@ -1,0 +1,85 @@
+{
+  "expo": {
+    "newArchEnabled": true,
+    "name": "uni",
+    "slug": "uniwind",
+    "version": "1.0.0",
+    "runtimeVersion": "1.0.0",
+    "scheme": "uniwind",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-video",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6366f1"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "L'application utilise votre position pour le suivi GPS des missions.",
+          "locationWhenInUsePermission": "L'application utilise votre position pour le suivi GPS des missions."
+        }
+      ]
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.efrid.udrive",
+      "config": {
+        "googleMapsApiKey": "AIzaSyB__0LDATbr506ReXb7nefDA0h_lp-nARo"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "L'application utilise votre position pour le suivi GPS des missions.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "L'application utilise votre position pour le suivi GPS des missions."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "softwareKeyboardLayoutMode": "pan",
+      "predictiveBackGestureEnabled": false,
+      "package": "com.efrid.udrive",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB__0LDATbr506ReXb7nefDA0h_lp-nARo"
+        }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "2c67f050-bbf2-415b-918a-90513ecf466b"
+      }
+    },
+    "owner": "efrid"
+  }
+}

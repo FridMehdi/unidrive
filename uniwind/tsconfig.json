@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "extends": "expo/tsconfig.base",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts"
+  ]
+}

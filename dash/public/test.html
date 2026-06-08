@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDrive - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .status {
+            background: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-title {
+            color: #166534;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .status-text {
+            color: #15803d;
+        }
+        
+        .info {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #1e293b;
+            font-weight: 600;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .api-test {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fef3c7;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .api-test.show {
+            display: block;
+        }
+        
+        .loader {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 UDrive</h1>
+        <p class="subtitle">Plateforme VTC Nouvelle Génération</p>
+        
+        <div class="status">
+            <div class="status-title">✅ Infrastructure Déployée</div>
+            <div class="status-text">
+                Frontend hébergé sur CloudFront + S3<br>
+                Backend sur AWS ECS Fargate<br>
+                Base de données PostgreSQL RDS
+            </div>
+        </div>
+        
+        <div class="info">
+            <div class="info-item">
+                <span class="info-label">Environment</span>
+                <span class="info-value">Production</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Frontend</span>
+                <span class="info-value">app.u-drive.ai</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">API Backend</span>
+                <span class="info-value">api.u-drive.ai</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Région</span>
+                <span class="info-value">eu-west-1</span>
+            </div>
+        </div>
+        
+        <button class="btn" onclick="testAPI()">🔍 Tester l'API</button>
+        
+        <div class="api-test" id="apiTest">
+            <div class="loader" id="loader"></div>
+            <div id="result" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        async function testAPI() {
+            const apiTest = document.getElementById('apiTest');
+            const loader = document.getElementById('loader');
+            const result = document.getElementById('result');
+            
+            apiTest.classList.add('show');
+            loader.style.display = 'block';
+            result.innerHTML = '';
+            
+            try {
+                const response = await fetch('https://api.u-drive.ai/api/users/health');
+                const data = await response.json();
+                
+                loader.style.display = 'none';
+                
+                if (response.status === 401) {
+                    result.innerHTML = `
+                        <div style="color: #15803d; font-weight: 600;">
+                            ✅ API Backend Opérationnelle
+                        </div>
+                        <div style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">
+                            Authentification requise (normal)
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div style="color: #15803d; font-weight: 600;">
+                            ✅ Status: ${response.status}
+                        </div>
+                        <div style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">
+                            ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                result.innerHTML = `
+                    <div style="color: #dc2626; font-weight: 600;">
+                        ❌ Erreur de connexion
+                    </div>
+                    <div style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
